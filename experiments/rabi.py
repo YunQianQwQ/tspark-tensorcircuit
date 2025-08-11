@@ -7,13 +7,17 @@ module_path = ".."
 sys.path.insert(0, module_path)
 
 from tensorcircuit import Circuit, Param, gates, waveforms
-from tensorcircuit.cloud.apis import submit_task, get_device, set_provider, set_token, list_devices
+from tensorcircuit.cloud.apis import submit_task, get_device, set_provider, set_token, list_devices, list_properties
 import re
+
+from dotenv import load_dotenv
+
+load_dotenv()  
 
 shots_const = 1000
 
 print("✅ TEST FILE LOADED")
-set_token("")
+set_token(os.getenv("TOKEN"))
 set_provider("tencent")
 ds = list_devices()
 print(ds)
@@ -36,7 +40,19 @@ def gen_parametric_waveform_circuit(t):
     builder.play("drive_frame", waveforms.CosineDrag(t, 0.2, 0.0, 0.0))
 
     builder.build()
+
+
+    qc.x(0)
     qc.add_calibration('rabi_test', ['q[0]']) 
+    # qc.x(0)
+    # qc.add_calibration('rabi_test', ['q[0]']) 
+    # qc.add_calibration('rabi_test', ['q[0]']) 
+    # qc.x(0)
+    # qc.add_calibration('rabi_test', ['q[0]']) 
+    # qc.add_calibration('rabi_test', ['q[0]']) 
+    # qc.add_calibration('rabi_test', ['q[0]']) 
+    # qc.x(0)
+    # qc.add_calibration('rabi_test', ['q[0]']) 
     
     tqasm_code = qc.to_tqasm()
 
@@ -104,3 +120,10 @@ def draw_rabi(result_lst):
 
 data = exp_rabi()
 draw_rabi(data)
+
+
+# gen_parametric_waveform_circuit(1)
+
+
+
+# print(list_properties("tianji_m2"))

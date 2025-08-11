@@ -132,7 +132,8 @@ class Circuit(BaseCircuit):
     ) -> None:
         self.calibration_invokes.append({
             "name": name,
-            "parameters": parameters
+            "parameters": parameters,
+            "pos": len(self._qir)
         })
 
 
@@ -140,11 +141,6 @@ class Circuit(BaseCircuit):
         qasm_lines = []
         qasm_lines.append("TQASM 0.2;")
         qasm_lines.append(f"QREG q[{self._nqubits}];")
-
-        for gate in self._qir:
-            gname = gate["name"]
-            targets = ", ".join(f"q[{i}]" for i in gate["target"])
-            qasm_lines.append(f"{gname} {targets};")
 
         for cal in getattr(self, "calibrations", []):
             pname = ", ".join(cal["parameters"])
@@ -158,9 +154,35 @@ class Circuit(BaseCircuit):
                     qasm_lines.append(f"  play({inst['frame']}, {wf_type}({args_str}));")
             qasm_lines.append("}")
 
+
+        # 先把 calibration_invokes 按 pos 分组，并保留同 pos 内的插入顺序
+        from collections import defaultdict
+        cals_by_pos = defaultdict(list)
         for cal in getattr(self, "calibration_invokes", []):
-            pname = ", ".join(cal["parameters"])
-            qasm_lines.append(f"\n {cal['name']} {pname};")
+            # pos 记录的是加入时的 len(self._qir)
+            pos = cal.get("pos", len(self._qir))
+            cals_by_pos[pos].append(cal)
+
+        # 交错输出：在第 i 个门之前输出所有 pos == i 的校准
+        for i, gate in enumerate(self._qir):
+            for cal in cals_by_pos.get(i, []):
+                print(cal)
+                pname = ", ".join(cal.get("parameters", []))
+                qasm_lines.append(f"{cal['name']} {pname};")
+
+            print(gate)
+            gname = gate["name"]
+            gname = gname.upper()
+            if gname == "CNOT":
+                gname = "CX"
+            targets = ", ".join(f"q[{idx}]" for idx in gate["index"])
+            qasm_lines.append(f"{gname} {targets};")
+
+        # 收尾：把 pos == len(self._qir) 的校准放在最后
+        for cal in cals_by_pos.get(len(self._qir), []):
+            print(cal)
+            pname = ", ".join(cal.get("parameters", []))
+            qasm_lines.append(f"{cal['name']} {pname};")
 
         return "\n".join(qasm_lines)
     
