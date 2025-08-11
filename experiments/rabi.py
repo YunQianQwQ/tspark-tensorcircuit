@@ -31,7 +31,7 @@ print(ds)
 # MEASZ a[0];
 
 def gen_parametric_waveform_circuit(t):
-    qc = Circuit(1)
+    qc = Circuit(2)
 
     param0 = Param("a")
 
@@ -43,16 +43,16 @@ def gen_parametric_waveform_circuit(t):
 
 
     qc.x(0)
+    # qc.x(0)
+    # qc.add_calibration('rabi_test', ['q[0]']) 
+    # qc.add_calibration('rabi_test', ['q[0]']) 
+    # qc.x(0)
+    # qc.add_calibration('rabi_test', ['q[0]']) 
+    # qc.add_calibration('rabi_test', ['q[0]']) 
+    # qc.add_calibration('rabi_test', ['q[0]']) 
+    # qc.x(0)
     qc.add_calibration('rabi_test', ['q[0]']) 
-    # qc.x(0)
-    # qc.add_calibration('rabi_test', ['q[0]']) 
-    # qc.add_calibration('rabi_test', ['q[0]']) 
-    # qc.x(0)
-    # qc.add_calibration('rabi_test', ['q[0]']) 
-    # qc.add_calibration('rabi_test', ['q[0]']) 
-    # qc.add_calibration('rabi_test', ['q[0]']) 
-    # qc.x(0)
-    # qc.add_calibration('rabi_test', ['q[0]']) 
+    # qc.rabi_test(['q[0]'])
     
     tqasm_code = qc.to_tqasm()
 
@@ -71,6 +71,7 @@ def run_circuit(qc):
     enable_qos_qubit_mapping=False,
     )
     rf = t.results()
+    print(rf)
     return rf
 
 
@@ -118,11 +119,11 @@ def draw_rabi(result_lst):
     plt.show()
 
 
-data = exp_rabi()
-draw_rabi(data)
+# data = exp_rabi()
+# draw_rabi(data)
 
 
-# gen_parametric_waveform_circuit(1)
+gen_parametric_waveform_circuit(1)
 
 
 
