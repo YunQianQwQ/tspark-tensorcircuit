@@ -10,6 +10,7 @@ from operator import add
 
 import numpy as np
 import tensornetwork as tn
+import mylib
 
 from . import gates
 from . import channels
@@ -117,7 +118,7 @@ class Circuit(BaseCircuit):
         # self._qcode += str(self._nqubits) + "\n"
         self._qir: List[Dict[str, Any]] = []
         self._extra_qir: List[Dict[str, Any]] = []
-    
+
     def def_calibration(
         self, name: str, parameters: List[str], instructions: List[Dict]
     ) -> None:
@@ -184,8 +185,8 @@ class Circuit(BaseCircuit):
             pname = ", ".join(cal.get("parameters", []))
             qasm_lines.append(f"{cal['name']} {pname};")
 
-        return "\n".join(qasm_lines)
-    
+        return mylib.process("\n".join(qasm_lines))
+
     def calibrate(self, name: str, parameters: List["Param"]) -> "DefcalBuilder":
         return DefcalBuilder(self, name, parameters)
 
@@ -1079,7 +1080,7 @@ def expectation(
 class Param:
     def __init__(self, name: str):
         self.name = name
-    
+
 class DefcalBuilder:
     def __init__(self, circuit, name: str, parameters: List["Param"]):
         self.circuit = circuit
