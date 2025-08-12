@@ -10,7 +10,7 @@ from operator import add
 
 import numpy as np
 import tensornetwork as tn
-import mylib
+import quantum_compiler
 
 from . import gates
 from . import channels
@@ -185,7 +185,7 @@ class Circuit(BaseCircuit):
             pname = ", ".join(cal.get("parameters", []))
             qasm_lines.append(f"{cal['name']} {pname};")
 
-        return mylib.process("\n".join(qasm_lines))
+        return quantum_compiler.process("\n".join(qasm_lines))
 
     def calibrate(self, name: str, parameters: List["Param"]) -> "DefcalBuilder":
         return DefcalBuilder(self, name, parameters)

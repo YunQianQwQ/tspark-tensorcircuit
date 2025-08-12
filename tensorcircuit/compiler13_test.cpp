@@ -334,9 +334,15 @@ void process1()
 }
 
 static std::string process(const std::string& s) {
-    iss.str(s);
+    int pos1=(int)s.rfind("}");
+    if(pos1==(int)s.size())pos1=0;else ++pos1;
+    int pos2=(int)s.find("TQASM");
+    if(pos2!=(int)string::npos)pos2=(int)s.find(";",pos2)+1;
+    int prefix_len=min(max(pos1,pos2),(int)s.size());
+    if(s[prefix_len]=='\n')++prefix_len;
+    iss.str(s.substr(prefix_len));
     process1();
-    return oss.str();
+    return s.substr(0,prefix_len)+oss.str();
 }
 
 int main()
