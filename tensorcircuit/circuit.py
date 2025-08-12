@@ -61,9 +61,10 @@ class Circuit(BaseCircuit):
             ``max_singular_values`` and ``max_truncation_err``.
         :type split: Optional[Dict[str, Any]]
         """
-        super().__init__(
-            nqubits=nqubits, inputs=inputs, mps_inputs=mps_inputs, split=split
-        )
+        super().__init__(nqubits=nqubits,
+                         inputs=inputs,
+                         mps_inputs=mps_inputs,
+                         split=split)
         self.calibrations = []
         self.calibration_invokes = []
 
@@ -95,7 +96,8 @@ class Circuit(BaseCircuit):
         else:  # mps_inputs is not None
             mps_nodes = list(mps_inputs.nodes)  # type: ignore
             for i, n in enumerate(mps_nodes):
-                mps_nodes[i].tensor = backend.cast(n.tensor, dtypestr)  # type: ignore
+                mps_nodes[i].tensor = backend.cast(n.tensor,
+                                                   dtypestr)  # type: ignore
             mps_edges = mps_inputs.out_edges + mps_inputs.in_edges  # type: ignore
             ndict, edict = tn.copy(mps_nodes)
             new_nodes = []
@@ -119,24 +121,20 @@ class Circuit(BaseCircuit):
         self._qir: List[Dict[str, Any]] = []
         self._extra_qir: List[Dict[str, Any]] = []
 
-    def def_calibration(
-        self, name: str, parameters: List[str], instructions: List[Dict]
-    ) -> None:
+    def def_calibration(self, name: str, parameters: List[str],
+                        instructions: List[Dict]) -> None:
         self.calibrations.append({
             "name": name,
             "parameters": parameters,
             "instructions": instructions
         })
 
-    def add_calibration(
-        self, name: str, parameters: List[str]
-    ) -> None:
+    def add_calibration(self, name: str, parameters: List[str]) -> None:
         self.calibration_invokes.append({
             "name": name,
             "parameters": parameters,
             "pos": len(self._qir)
         })
-
 
     def to_tqasm(self) -> str:
         qasm_lines = []
@@ -148,13 +146,15 @@ class Circuit(BaseCircuit):
             qasm_lines.append(f"\ndefcal {cal['name']} {pname} {{")
             for inst in cal["instructions"]:
                 if inst["type"] == "frame":
-                    qasm_lines.append(f"  frame {inst['frame']} = newframe({inst['qubit']});")
+                    qasm_lines.append(
+                        f"  frame {inst['frame']} = newframe({inst['qubit']});"
+                    )
                 elif inst["type"] == "play":
                     args_str = ", ".join(str(x) for x in inst["args"])
                     wf_type = inst["waveform_type"]
-                    qasm_lines.append(f"  play({inst['frame']}, {wf_type}({args_str}));")
+                    qasm_lines.append(
+                        f"  play({inst['frame']}, {wf_type}({args_str}));")
             qasm_lines.append("}")
-
 
         # 先把 calibration_invokes 按 pos 分组，并保留同 pos 内的插入顺序
         from collections import defaultdict
@@ -176,8 +176,13 @@ class Circuit(BaseCircuit):
             gname = gname.upper()
             if gname == "CNOT":
                 gname = "CX"
+            print(gate)
             targets = ", ".join(f"q[{idx}]" for idx in gate["index"])
-            qasm_lines.append(f"{gname} {targets};")
+            if (gname == "RX") or (gname == "RY") or (gname == "RZ"):
+                theta = gate["parameters"]["theta"]
+                qasm_lines.append(f"{gname} ({theta}) {targets};")
+            else:
+                qasm_lines.append(f"{gname} {targets};")
 
         # 收尾：把 pos == len(self._qir) 的校准放在最后
         for cal in cals_by_pos.get(len(self._qir), []):
@@ -187,7 +192,8 @@ class Circuit(BaseCircuit):
 
         return mylib.process("\n".join(qasm_lines))
 
-    def calibrate(self, name: str, parameters: List["Param"]) -> "DefcalBuilder":
+    def calibrate(self, name: str,
+                  parameters: List["Param"]) -> "DefcalBuilder":
         return DefcalBuilder(self, name, parameters)
 
     def replace_mps_inputs(self, mps_inputs: QuOperator) -> None:
@@ -221,9 +227,9 @@ class Circuit(BaseCircuit):
         new_front = []
         for e in mps_edges:
             new_front.append(edict[e])
-        old = set(id(n) for n in self._nodes[: self._start_index])
+        old = set(id(n) for n in self._nodes[:self._start_index])
         j = -1
-        for n in self._nodes[: self._start_index]:
+        for n in self._nodes[:self._start_index]:
             for e in n:
                 if e.is_dangling():
                     j += 1
@@ -242,7 +248,7 @@ class Circuit(BaseCircuit):
         j += 1
         self._front += new_front[j:]
         self.coloring_nodes(new_nodes)
-        self._nodes = new_nodes + self._nodes[self._start_index :]
+        self._nodes = new_nodes + self._nodes[self._start_index:]
         self._start_index = len(new_nodes)
 
     # TODO(@refraction-ray): add noise support in IR
@@ -369,11 +375,8 @@ class Circuit(BaseCircuit):
         # assert px + py + pz < 1 and px >= 0 and py >= 0 and pz >= 0
 
         def step_function(x: Tensor) -> Tensor:
-            r = (
-                backend.sign(x - px)
-                + backend.sign(x - px - py)
-                + backend.sign(x - px - py - pz)
-            )
+            r = (backend.sign(x - px) + backend.sign(x - px - py) +
+                 backend.sign(x - px - py - pz))
             r = backend.cast(r / 2 + 1.5, dtype="int32")
             # [0: x, 1: y, 2: z, 3: I]
 
@@ -408,7 +411,8 @@ class Circuit(BaseCircuit):
         # speed is similar to ``unitary_kraus``
         def index2gate2(r: Tensor, kraus: Sequence[Tensor]) -> Tensor:
             # r is int type Tensor of shape []
-            return backend.switch(r, [lambda _=k: _ for k in kraus])  # type: ignore
+            return backend.switch(r, [lambda _=k: _
+                                      for k in kraus])  # type: ignore
 
         return self._unitary_kraus_template(
             kraus,
@@ -440,6 +444,7 @@ class Circuit(BaseCircuit):
         :return: shape [] int dtype tensor indicates which kraus gate is actually applied
         :rtype: Tensor
         """
+
         # general impl from Monte Carlo trajectory depolarizing above
         # still jittable
 
@@ -465,9 +470,8 @@ class Circuit(BaseCircuit):
         *index: int,
         prob: Optional[Sequence[float]] = None,
         status: Optional[float] = None,
-        get_gate_from_index: Optional[
-            Callable[[Tensor, Sequence[Tensor]], Tensor]
-        ] = None,
+        get_gate_from_index: Optional[Callable[[Tensor, Sequence[Tensor]],
+                                               Tensor]] = None,
         name: Optional[str] = None,
     ) -> Tensor:  # DRY
         sites = len(index)
@@ -476,11 +480,13 @@ class Circuit(BaseCircuit):
         kraus = [backend.reshapem(k) for k in kraus]
         if prob is None:
             prob = [
-                backend.real(backend.trace(backend.adjoint(k) @ k) / k.shape[0])
+                backend.real(
+                    backend.trace(backend.adjoint(k) @ k) / k.shape[0])
                 for k in kraus
             ]
             kraus = [
-                k / backend.cast(backend.sqrt(p), dtypestr) for k, p in zip(kraus, prob)
+                k / backend.cast(backend.sqrt(p), dtypestr)
+                for k, p in zip(kraus, prob)
             ]
         if not backend.is_tensor(prob):
             prob = backend.convert_to_tensor(prob)
@@ -492,10 +498,9 @@ class Circuit(BaseCircuit):
                 r = backend.convert_to_tensor(0.0)
             else:
                 r = backend.sum(
-                    backend.stack(
-                        [backend.sign(x - prob_cumsum[i]) for i in range(l - 1)]
-                    )
-                )
+                    backend.stack([
+                        backend.sign(x - prob_cumsum[i]) for i in range(l - 1)
+                    ]))
             r = backend.cast(r / 2.0 + (l - 1) / 2.0, dtype="int32")
             # [0: kraus[0], 1: kraus[1]...]
             return r
@@ -504,10 +509,12 @@ class Circuit(BaseCircuit):
             status = backend.implicit_randu()[0]
         status = backend.convert_to_tensor(status)
         status = backend.real(status)
-        prob_cumsum = backend.cast(prob_cumsum, dtype=status.dtype)  # type: ignore
+        prob_cumsum = backend.cast(prob_cumsum,
+                                   dtype=status.dtype)  # type: ignore
         r = step_function(status)
         if get_gate_from_index is None:
-            raise ValueError("no `get_gate_from_index` implementation is provided")
+            raise ValueError(
+                "no `get_gate_from_index` implementation is provided")
         g = get_gate_from_index(r, kraus)
         g = backend.reshape(g, [2 for _ in range(sites * 2)])
         self.any(*index, unitary=g, name=name)  # type: ignore
@@ -524,11 +531,13 @@ class Circuit(BaseCircuit):
         sites = len(index)
         kraus_tensor = [k.tensor for k in kraus]
         kraus_tensor_f = [lambda _=k: _ for k in kraus_tensor]
+
         # must return tensor instead of ``tn.Node`` for switch`
 
         def calculate_kraus_p(i: Tensor) -> Tensor:
             # i: Tensor as int of shape []
-            newnodes, newfront = self._copy()  # TODO(@refraction-ray): support reuse?
+            newnodes, newfront = self._copy(
+            )  # TODO(@refraction-ray): support reuse?
             # simply reuse=True is wrong, as the circuit is contracting at building
             # self._copy seems slower than self._copy_state, but anyway the building time is unacceptable
             lnewnodes, lnewfront = self._copy(conj=True)
@@ -569,7 +578,7 @@ class Circuit(BaseCircuit):
         # https://github.com/tensorflow/tensorflow/blob/master/tensorflow/python/autograph/g3doc/reference/common_errors.md
 
         if (
-            status >= 0 or weight == 0
+                status >= 0 or weight == 0
         ):  # the same concern, but this simple if is easy to convert to ``backend.cond``
             # Floating point error resulted in a malformed sample.
             # Fall back to the most likely case.
@@ -599,7 +608,9 @@ class Circuit(BaseCircuit):
         # vmap, grad, vvag are all fine for this function
         # layerwise jit technique can greatly boost the staging time, see in /examples/mcnoise_boost.py
         sites = len(index)
-        kraus_tensor = [k.tensor if isinstance(k, tn.Node) else k for k in kraus]
+        kraus_tensor = [
+            k.tensor if isinstance(k, tn.Node) else k for k in kraus
+        ]
         kraus_tensor = [gates.array_to_tensor(k) for k in kraus_tensor]
 
         # tn with hole
@@ -611,6 +622,7 @@ class Circuit(BaseCircuit):
                 newfront[j] ^ lnewfront[j]
         ns = contractor(newnodes + lnewnodes, output_edge_order=des)
         ntensor = ns.tensor
+
         # ns, des
 
         def calculate_kraus_p(i: int) -> Tensor:
@@ -634,9 +646,11 @@ class Circuit(BaseCircuit):
             k / backend.cast(backend.sqrt(w) + eps, dtypestr)
             for w, k in zip(prob, kraus_tensor)
         ]
-        pick = self.unitary_kraus(
-            new_kraus, *index, prob=prob, status=status, name=name
-        )
+        pick = self.unitary_kraus(new_kraus,
+                                  *index,
+                                  prob=prob,
+                                  status=status,
+                                  name=name)
         if with_prob is False:
             return pick
         else:
@@ -667,16 +681,19 @@ class Circuit(BaseCircuit):
             when the random number will be generated automatically
         :type status: Optional[float], optional
         """
-        return self._general_kraus_2(
-            kraus, *index, status=status, with_prob=with_prob, name=name
-        )
+        return self._general_kraus_2(kraus,
+                                     *index,
+                                     status=status,
+                                     with_prob=with_prob,
+                                     name=name)
 
     apply_general_kraus = general_kraus
 
     @staticmethod
     def apply_general_kraus_delayed(
-        krausf: Callable[..., Sequence[Gate]], is_unitary: bool = False
-    ) -> Callable[..., None]:
+            krausf: Callable[..., Sequence[Gate]],
+            is_unitary: bool = False) -> Callable[..., None]:
+
         def apply(
             self: "Circuit",
             *index: int,
@@ -686,7 +703,10 @@ class Circuit(BaseCircuit):
         ) -> None:
             kraus = krausf(**vars)
             if not is_unitary:
-                self.apply_general_kraus(kraus, *index, status=status, name=name)
+                self.apply_general_kraus(kraus,
+                                         *index,
+                                         status=status,
+                                         name=name)
             else:
                 self.unitary_kraus(kraus, *index, status=status, name=name)
 
@@ -702,9 +722,9 @@ class Circuit(BaseCircuit):
             setattr(
                 cls,
                 k,
-                cls.apply_general_kraus_delayed(
-                    getattr(channels, k + "channel"), is_unitary=is_unitary
-                ),
+                cls.apply_general_kraus_delayed(getattr(
+                    channels, k + "channel"),
+                                                is_unitary=is_unitary),
             )
             doc = """
             Apply %s quantum channel on the circuit.
@@ -773,7 +793,7 @@ class Circuit(BaseCircuit):
         c._nodes = ns
         c._front = es
         c.replace_mps_inputs(mps)
-        return QuOperator(c._front[: self._nqubits], c._front[self._nqubits :])
+        return QuOperator(c._front[:self._nqubits], c._front[self._nqubits:])
 
     quoperator = get_quoperator
     # both are not good names, but for backward compatibility
@@ -796,9 +816,9 @@ class Circuit(BaseCircuit):
         c.replace_mps_inputs(mps)
         return backend.reshapem(c.state())
 
-    def measure_reference(
-        self, *index: int, with_prob: bool = False
-    ) -> Tuple[str, float]:
+    def measure_reference(self,
+                          *index: int,
+                          with_prob: bool = False) -> Tuple[str, float]:
         """
         Take measurement on the given quantum lines by ``index``.
 
@@ -839,11 +859,8 @@ class Circuit(BaseCircuit):
                 nodes2.append(tn.Node(m))
                 nodes2[-1].get_edge(0) ^ edge2[index[i]]
             nodes1.extend(nodes2)
-            rho = (
-                1
-                / p
-                * contractor(nodes1, output_edge_order=[edge1[j], edge2[j]]).tensor
-            )
+            rho = (1 / p * contractor(
+                nodes1, output_edge_order=[edge1[j], edge2[j]]).tensor)
             pu = rho[0, 0]
             r = backend.random_uniform([])
             r = backend.real(backend.cast(r, dtypestr))
