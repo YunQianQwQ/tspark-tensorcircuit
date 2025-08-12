@@ -168,14 +168,15 @@ edges = [[1, 2], [3, 4], [0, 1], [2, 3], [1, 2], [3, 4]]
 # n = 9
 # edges = [[0, 1], [3, 4], [7, 8], [2, 5], [0, 3], [4, 5], [6, 7], [1, 2], [4, 7], [5, 8], [3, 6], [1, 4]]
 
-c = Circuit(n)
-c.x(0)
-c.x(0)
-c.x(1)
-print(run_circuit(c))
+# c = Circuit(n)
+# c.x(0)
+# c.x(0)
+# c.x(1)
+# print(run_circuit(c))
 # N = 20
 # test(n, edges, N, 1, 1)
 
 
 
-# print(list_properties("tianji_m2"))
+for a, b in list_properties("tianji_m2")["bits"].items():
+    print(str(1 - b["SingleQubitErrRate"]).split('.')[1][2:4], end=',')
