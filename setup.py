@@ -34,6 +34,6 @@ with open("README.md", "r", encoding="utf-8") as fh:
 
 from pybind11.setup_helpers import Pybind11Extension, build_ext
 
-ext_modules = [Pybind11Extension("mylib", ["tensorcircuit/test.cpp"])]
+ext_modules = [Pybind11Extension("quantum_compiler", ["tensorcircuit/compiler13.cpp"])]
 
-setuptools.setup(name="mylib", version="0.1.0", ext_modules=ext_modules, cmdclass={"build_ext": build_ext})
+setuptools.setup(name="quantum_compiler", version="0.1.0", ext_modules=ext_modules, cmdclass={"build_ext": build_ext})
