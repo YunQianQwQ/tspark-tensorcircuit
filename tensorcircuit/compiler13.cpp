@@ -62,8 +62,8 @@ struct gate
 int n_gate;
 vector<gate> a;
 vector<vector<int>> en,ep;
-stringstream iss;
-stringstream oss;
+istringstream iss;
+ostringstream oss;
 bool read_gate()
 {
 	string command,name;
@@ -302,7 +302,7 @@ void process1()
 	n_gate=(int)a.size();
 	calc_dependence();
 	ans.first=1e18;
-	F(i,0,50)
+	F(i,0,900/max(n_gate,20)+5)
 	{
 		vector<int> order=gen_order();
 		vector<gate> pa;
@@ -339,6 +339,10 @@ void process1()
 }
 
 static std::string process(const std::string& s) {
+    rnd=mt19937(0);
+#define clear(a) a=decltype(a)();
+    clear(iss);clear(oss);clear(a);clear(en);clear(ep);
+#undef clear
     int pos1=(int)s.rfind("}");
     if(pos1==(int)s.size())pos1=0;else ++pos1;
     int pos2=(int)s.find("TQASM");
