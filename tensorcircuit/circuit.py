@@ -156,7 +156,6 @@ class Circuit(BaseCircuit):
 
         qasm_lines.append(f"QREG q[{self._nqubits}];")
 
-
         # 先把 calibration_invokes 按 pos 分组，并保留同 pos 内的插入顺序
         from collections import defaultdict
         cals_by_pos = defaultdict(list)
@@ -190,7 +189,8 @@ class Circuit(BaseCircuit):
             pname = ", ".join(cal.get("parameters", []))
             qasm_lines.append(f"{cal['name']} {pname};")
         
-        print(len(qasm_lines))
+        print("\n".join(qasm_lines))
+        print(f"before processing : line = {len(qasm_lines)}")
 
         return quantum_compiler.process("\n".join(qasm_lines))
 

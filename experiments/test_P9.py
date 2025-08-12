@@ -32,56 +32,64 @@ print(ds)
 # MEASZ a[0];
 
 def get_circuit():
-	
-	# n = 5
-	# edges = [[1, 2], [3, 4], [0, 1], [2, 3], [1, 2], [3, 4]]
+    
+    n = 5
+    edges = [[1, 2], [3, 4], [0, 1], [2, 3], [1, 2], [3, 4]]
 
-	# n = 6
-	# edges = [[0, 1], [3, 4], [2, 5], [0, 3], [4, 5], [1, 2], [1, 4]]
+    # n = 6
+    # edges = [[0, 1], [3, 4], [2, 5], [0, 3], [4, 5], [1, 2], [1, 4]]
 
-	n = 9
-	edges = [[0, 1], [3, 4], [7, 8], [2, 5], [0, 3], [4, 5], [6, 7], [1, 2], [4, 7], [5, 8], [3, 6], [1, 4]]
+    # n = 9
+    # edges = [[0, 1], [3, 4], [7, 8], [2, 5], [0, 3], [4, 5], [6, 7], [1, 2], [4, 7], [5, 8], [3, 6], [1, 4]]
 
-	N = 4
-	qc = test(n, edges, N, 1, 1)
+    N = 4
+    # qc = test(n, edges, N, 1, 1)
 
-	tqasm_code = qc.to_tqasm()
+    qc = Circuit(13)
+    qc.cx(0, 2)
 
-	print(tqasm_code)
-	return qc
+    # tqasm_code = qc.to_tqasm()
+
+    # print(tqasm_code)
+
+    # print(f"after processing : line = {tqasm_code.count('\n')}")
+    return qc
 
 
 def run_circuit(qc):
-	device_name = "tianji_m2" 
-	d = get_device(device_name)
-	t = submit_task(
-	circuit=qc,
-	shots=shots_const,
-	device=d,
-	enable_qos_gate_decomposition=False,
-	enable_qos_qubit_mapping=False,
-	)
-	rf = t.results()
-	print(rf)
-	return rf
+    device_name = "tianji_s2" 
+    d = get_device(device_name)
+    t = submit_task(
+    circuit=qc,
+    shots=shots_const,
+    device=d,
+    enable_qos_gate_decomposition=False,
+    enable_qos_qubit_mapping=False,
+    )
+    rf = t.results()
+    print(rf)
+    return rf
 
 
 
 def exp_rabi():
-	result_lst = []
-	for t in range(1, 4, 2):
-		qc = get_circuit()
-		result = run_circuit(qc)
-		result['duration'] = t
-		result_lst.append(result)
-	return result_lst
+    result_lst = []
+    for t in range(1, 4, 2):
+        qc = get_circuit()
+        result = run_circuit(qc)
+        result['duration'] = t
+        result_lst.append(result)
+    return result_lst
 
 # data = exp_rabi()
 # draw_rabi(data)
 
 
 # gen_parametric_waveform_circuit(1)
-get_circuit()
+qc = get_circuit()
+print(777)
+result = run_circuit(qc)
+print(result)
 
 
 
