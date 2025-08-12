@@ -339,10 +339,9 @@ void process1()
 namespace py = pybind11;
 
 static std::string process(const std::string& s) {
-    iss<<s;
-    string t;
-    oss>>t;
-    return t;
+    iss.str(s);
+    process1();
+    return oss.str();
 }
 
 PYBIND11_MODULE(mylib, m) {

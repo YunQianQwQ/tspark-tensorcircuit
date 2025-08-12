@@ -334,11 +334,9 @@ void process1()
 }
 
 static std::string process(const std::string& s) {
-    iss<<s;
+    iss.str(s);
     process1();
-    string t;
-    oss>>t;
-    return t;
+    return oss.str();
 }
 
 int main()
