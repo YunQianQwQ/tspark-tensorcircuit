@@ -118,6 +118,7 @@ class Circuit(BaseCircuit):
         # self._qcode += str(self._nqubits) + "\n"
         self._qir: List[Dict[str, Any]] = []
         self._extra_qir: List[Dict[str, Any]] = []
+        self._mapping = True
 
     def def_calibration(
         self, name: str, parameters: List[str], instructions: List[Dict]
@@ -137,7 +138,7 @@ class Circuit(BaseCircuit):
             "pos": len(self._qir)
         })
 
-
+    
     def to_tqasm(self) -> str:
         qasm_lines = []
         qasm_lines.append("TQASM 0.2;")
@@ -192,7 +193,7 @@ class Circuit(BaseCircuit):
         # print("\n".join(qasm_lines))
         # print(f"before processing : line = {len(qasm_lines)}")
 
-        return quantum_compiler.process("\n".join(qasm_lines))
+        return quantum_compiler.process("\n".join(qasm_lines), self._mapping)
 
     def calibrate(self, name: str, parameters: List["Param"]) -> "DefcalBuilder":
         return DefcalBuilder(self, name, parameters)

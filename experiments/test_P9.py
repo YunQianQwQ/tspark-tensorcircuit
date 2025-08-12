@@ -84,7 +84,7 @@ def run_circuit(qc):
         for i in range(n):
             t += str(a[qs[i]])
         re[t] = b
-    return re
+    return (re, sorted(ps))
 
 
 
