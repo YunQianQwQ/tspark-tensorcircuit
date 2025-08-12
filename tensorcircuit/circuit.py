@@ -4,7 +4,6 @@ Quantum circuit: the state simulator
 
 # pylint: disable=invalid-name
 
-import sys
 from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple
 from functools import reduce
 from operator import add
@@ -157,7 +156,6 @@ class Circuit(BaseCircuit):
 
         qasm_lines.append(f"QREG q[{self._nqubits}];")
 
-
         # 先把 calibration_invokes 按 pos 分组，并保留同 pos 内的插入顺序
         from collections import defaultdict
         cals_by_pos = defaultdict(list)
@@ -179,15 +177,20 @@ class Circuit(BaseCircuit):
             if gname == "CNOT":
                 gname = "CX"
             targets = ", ".join(f"q[{idx}]" for idx in gate["index"])
-            qasm_lines.append(f"{gname} {targets};")
+            if (gname == "RX") or (gname == "RY") or (gname == "RZ"):
+                theta = gate["parameters"]["theta"]
+                qasm_lines.append(f"{gname} ({theta}) {targets};")
+            else:
+                qasm_lines.append(f"{gname} {targets};")
 
         # 收尾：把 pos == len(self._qir) 的校准放在最后
         for cal in cals_by_pos.get(len(self._qir), []):
-            # print(cal)
+            print(cal)
             pname = ", ".join(cal.get("parameters", []))
             qasm_lines.append(f"{cal['name']} {pname};")
         
-        print(len(qasm_lines),file=sys.stderr)
+        print("\n".join(qasm_lines))
+        print(f"before processing : line = {len(qasm_lines)}")
 
         return quantum_compiler.process("\n".join(qasm_lines))
 
