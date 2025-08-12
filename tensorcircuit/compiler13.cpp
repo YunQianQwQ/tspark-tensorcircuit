@@ -399,7 +399,6 @@ vector<int> gen_order()
 pair<double,state> ans;
 void process1()
 {
-	init();
 	while(read_gate());
 	n_gate=(int)a.size();
 	calc_dependence();
@@ -450,9 +449,10 @@ void process1()
 
 
 static std::string process(const std::string& s,bool mapping) {
+    init();
     if(!mapping) {
         string t=s+"\n//";
-        F(i,0,13)t+=" "+to_string(i);
+        F(i,0,n_qubit)t+=" "+to_string(i);
         t+="\n";
         return t;
     }
