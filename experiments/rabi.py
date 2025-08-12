@@ -12,7 +12,7 @@ import re
 
 from dotenv import load_dotenv
 
-load_dotenv()  
+load_dotenv()
 
 shots_const = 1000
 
@@ -25,8 +25,8 @@ print(ds)
 # TQASM 0.2;
 # QREG a[1];
 # defcal rabi_test a {
-# frame drive_frame = newframe(a); 
-# play(drive_frame, cosine_drag($formatted_t, 0.2, 0.0, 0.0)); } 
+# frame drive_frame = newframe(a);
+# play(drive_frame, cosine_drag($formatted_t, 0.2, 0.0, 0.0)); }
 # rabi_test a[0];
 # MEASZ a[0];
 
@@ -44,16 +44,16 @@ def gen_parametric_waveform_circuit(t):
 
     qc.x(0)
     # qc.x(0)
-    # qc.add_calibration('rabi_test', ['q[0]']) 
-    # qc.add_calibration('rabi_test', ['q[0]']) 
+    # qc.add_calibration('rabi_test', ['q[0]'])
+    # qc.add_calibration('rabi_test', ['q[0]'])
     # qc.x(0)
-    # qc.add_calibration('rabi_test', ['q[0]']) 
-    # qc.add_calibration('rabi_test', ['q[0]']) 
-    # qc.add_calibration('rabi_test', ['q[0]']) 
+    # qc.add_calibration('rabi_test', ['q[0]'])
+    # qc.add_calibration('rabi_test', ['q[0]'])
+    # qc.add_calibration('rabi_test', ['q[0]'])
     # qc.x(0)
-    qc.add_calibration('rabi_test', ['q[0]']) 
+    qc.add_calibration('rabi_test', ['q[0]'])
     # qc.rabi_test(['q[0]'])
-    
+
     tqasm_code = qc.to_tqasm()
 
     print(tqasm_code)
@@ -61,7 +61,7 @@ def gen_parametric_waveform_circuit(t):
 
 
 def run_circuit(qc):
-    device_name = "tianji_m2" 
+    device_name = "tianji_m2"
     d = get_device(device_name)
     t = submit_task(
     circuit=qc,
@@ -88,24 +88,16 @@ def exp_rabi():
 
 
 def draw_rabi(result_lst):
-    data = {
-        'duration': [],
-        '0': [],
-        '1': []
-    }
-    
+    data = {'duration': [], '0': [], '1': []}
+
     for result in result_lst:
         data['0'].append(int(result['0']) / shots_const)
         data['1'].append(int(result['1']) / shots_const)
         data['duration'].append(result['duration'])
 
-
-        
-
-    plt.figure(figsize=(10,6))
+    plt.figure(figsize=(10, 6))
     plt.plot(data['duration'], data['0'], 'b-o', label='State |0>')
     plt.plot(data['duration'], data['1'], 'r--s', label='State |1>')
-
 
     plt.title('Rabi Oscillation Experiment')
     plt.xlabel('Duration (dt)')
@@ -113,7 +105,6 @@ def draw_rabi(result_lst):
     plt.grid(alpha=0.3)
     plt.legend()
     plt.tight_layout()
-
 
     plt.savefig('rabi.png', dpi=300)
     plt.show()
@@ -123,7 +114,47 @@ def draw_rabi(result_lst):
 # draw_rabi(data)
 
 
-gen_parametric_waveform_circuit(1)
+# gen_parametric_waveform_circuit(1)
+
+T = 10
+
+def rzz (c, i, j, theta):
+    c.cnot(j, i)
+    c.rz(i, theta=theta)
+    c.cnot(j, i)
+    return c
+
+def P (c, n, edges, N, J = -1., h = 1.):
+    for i in range(n):
+        c.rx(i, theta = 2*T*h/N)
+    for g0,g1 in edges:
+        c = rzz(c, g0, g1, -2*T*J/N)
+    return c
+
+
+def test(n, edge, N, J=-1., h=1.):
+    c = Circuit(n)
+    for i in range(N):
+        c = P(c, n, edge, N, J, h)
+    run_circuit(c)
+
+    # z_exp = c.expectation([gates.z(), [0]])
+    # z_exp_float = float(z_exp.numpy())
+
+    # return z_exp_float
+
+n = 5
+edges = [[1, 2], [3, 4], [0, 1], [2, 3], [1, 2], [3, 4]]
+
+# n = 6
+# edges = [[0, 1], [3, 4], [2, 5], [0, 3], [4, 5], [1, 2], [1, 4]]
+
+# n = 9
+# edges = [[0, 1], [3, 4], [7, 8], [2, 5], [0, 3], [4, 5], [6, 7], [1, 2], [4, 7], [5, 8], [3, 6], [1, 4]]
+
+c = Circuit(n)
+N = 20
+test(n, edges, N, 1, 1)
 
 
 

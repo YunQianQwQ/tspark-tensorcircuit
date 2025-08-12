@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 
 K = tc.set_backend("tensorflow")
 
-T = 10
+T = 5
 
 def rzz (c, i, j, theta):
 	c.cnot(j, i)
