@@ -190,7 +190,7 @@ class Circuit(BaseCircuit):
             pname = ", ".join(cal.get("parameters", []))
             qasm_lines.append(f"{cal['name']} {pname};")
         
-        # print("\n".join(qasm_lines))
+        print("\n".join(qasm_lines))
         # print(f"before processing : line = {len(qasm_lines)}")
 
         return quantum_compiler.process("\n".join(qasm_lines), self._mapping)
