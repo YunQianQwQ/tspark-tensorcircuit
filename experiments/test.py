@@ -1,3 +1,8 @@
+import os
+import sys
+module_path = ".."
+sys.path.insert(0, module_path)
+
 import numpy as np
 import tensorcircuit as tc
 import tensorflow as tf
@@ -5,18 +10,12 @@ import matplotlib.pyplot as plt
 from run import run_circuit
 
 from tensorcircuit.cloud.apis import submit_task, get_device, set_provider, set_token, list_devices, list_properties
-import os
 from dotenv import load_dotenv
-import sys
 
-module_path = ".."
-sys.path.insert(0, module_path)
 load_dotenv()
 
 set_token(os.getenv("TOKEN"))
 set_provider("tencent")
-
-K = tc.set_backend("tensorflow")
 
 T = 5
 
@@ -43,8 +42,8 @@ def test (n, edge, N, J = -1., h = 1.):
 
 	# return z_exp_float
 
-# n = 5
-# edges = [[1, 2], [3, 4], [0, 1], [2, 3], [1, 2], [3, 4]]
+n = 5
+edges = [[1, 2], [3, 4], [0, 1], [2, 3], [1, 2], [3, 4]]
 
 # n = 6
 # edges = [[0, 1], [3, 4], [2, 5], [0, 3], [4, 5], [1, 2], [1, 4]]
@@ -52,7 +51,7 @@ def test (n, edge, N, J = -1., h = 1.):
 # n = 9
 # edges = [[0, 1], [3, 4], [7, 8], [2, 5], [0, 3], [4, 5], [6, 7], [1, 2], [4, 7], [5, 8], [3, 6], [1, 4]]
 
-# N = 4
-# c = test(n, edges, N, 1, 1)
+N = 4
+c = test(n, edges, N, 1, 1)
 # print(c.state())
-# print(run_circuit(c))
+print(run_circuit(c))

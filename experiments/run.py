@@ -6,17 +6,19 @@ import sys
 module_path = ".."
 sys.path.insert(0, module_path)
 
-load_dotenv()
-set_token(os.getenv("TOKEN"))
-set_provider("tencent")
-
 shots_const = 1000
 
 def run_circuit(qc):
+    # print("asddslkajfjsakf")
+    # set_provider("tencent")
+    # load_dotenv()
+    # token = os.getenv("TOKEN")
+    # print(token)
     device_name = "tianji_s2"
     d = get_device(device_name)
     t = submit_task(
         circuit=qc,
+        # token=token,
         shots=shots_const,
         device=d,
         enable_qos_gate_decomposition=False,

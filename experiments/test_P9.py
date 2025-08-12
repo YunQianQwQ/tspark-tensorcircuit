@@ -16,23 +16,8 @@ from run import run_circuit
 
 load_dotenv()  
 
-shots_const = 1000
-
-print("✅ TEST FILE LOADED")
-
-# print("token =", os.getenv("TOKEN"))
 set_token(os.getenv("TOKEN"))
 set_provider("tencent")
-ds = list_devices()
-print(ds)
-
-# TQASM 0.2;
-# QREG a[1];
-# defcal rabi_test a {
-# frame drive_frame = newframe(a); 
-# play(drive_frame, cosine_drag($formatted_t, 0.2, 0.0, 0.0)); } 
-# rabi_test a[0];
-# MEASZ a[0];
 
 def get_circuit():
     
@@ -57,22 +42,6 @@ def get_circuit():
 
     # print(f"after processing : line = {tqasm_code.count('\n')}")
     return qc
-
-def exp_rabi():
-    result_lst = []
-    for t in range(1, 4, 2):
-        qc = get_circuit()
-        result = run_circuit(qc)
-        result['duration'] = t
-        result_lst.append(result)
-    return result_lst
-
-# data = exp_rabi()
-# draw_rabi(data)
-
-
-# gen_parametric_waveform_circuit(1)
-
 
 qc = get_circuit()
 # # print(777)
