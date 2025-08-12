@@ -139,7 +139,6 @@ class Circuit(BaseCircuit):
     def to_tqasm(self) -> str:
         qasm_lines = []
         qasm_lines.append("TQASM 0.2;")
-        qasm_lines.append(f"QREG q[{self._nqubits}];")
 
         for cal in getattr(self, "calibrations", []):
             pname = ", ".join(cal["parameters"])
@@ -155,6 +154,8 @@ class Circuit(BaseCircuit):
                     qasm_lines.append(
                         f"  play({inst['frame']}, {wf_type}({args_str}));")
             qasm_lines.append("}")
+
+        qasm_lines.append(f"QREG q[{self._nqubits}];")
 
         # 先把 calibration_invokes 按 pos 分组，并保留同 pos 内的插入顺序
         from collections import defaultdict

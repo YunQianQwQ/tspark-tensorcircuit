@@ -63,19 +63,20 @@ stringstream iss;
 stringstream oss;
 bool read_gate()
 {
-	string name;
+	string command,name;
 	vector<int> operand;
-	if(!(iss>>name))return false;
-	string operand_str;
-	getline(iss,operand_str);
-	for(int i=0;(i=(int)operand_str.find("q[",i))!=(int)string::npos;)
+	getline(iss,command);
+	int i=(int)command.find(" q[");
+	if(i==(int)string::npos)return false;
+	name=command.substr(0,i);
+	while((i=(int)command.find("q[",i))!=(int)string::npos)
 	{
 		i+=2;
 		size_t len;
-		operand.emplace_back(stoi(operand_str.substr(i),&len));
+		operand.emplace_back(stoi(command.substr(i),&len));
 		i+=(int)len;
 	}
-	a.push_back({name,operand});
+	if(name!="QREG")a.push_back({name,operand});
 	return true;
 }
 void calc_dependence()
@@ -308,6 +309,7 @@ void process1()
 		swap(a,pa);
 	}
 //	cerr<<ans.first<<endl;
+	oss<<"QREG q["<<n_qubit<<"];\n";
 	for(const gate &g:ans.second.ga)
 	{
 		oss<<g.name;
