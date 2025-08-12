@@ -35,12 +35,12 @@ def get_circuit():
 	
 	n = 5
 	edges = [[1, 2], [3, 4], [0, 1], [2, 3], [1, 2], [3, 4]]
-	N = 20
+	N = 4
 	qc = test(n, edges, N, 1, 1)
 
 	tqasm_code = qc.to_tqasm()
 
-	# print(tqasm_code)
+	print(tqasm_code)
 	return qc
 
 

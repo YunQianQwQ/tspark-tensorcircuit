@@ -4,6 +4,7 @@ Quantum circuit: the state simulator
 
 # pylint: disable=invalid-name
 
+import sys
 from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple
 from functools import reduce
 from operator import add
@@ -182,11 +183,11 @@ class Circuit(BaseCircuit):
 
         # 收尾：把 pos == len(self._qir) 的校准放在最后
         for cal in cals_by_pos.get(len(self._qir), []):
-            print(cal)
+            # print(cal)
             pname = ", ".join(cal.get("parameters", []))
             qasm_lines.append(f"{cal['name']} {pname};")
         
-        print(len(qasm_lines))
+        print(len(qasm_lines),file=sys.stderr)
 
         return quantum_compiler.process("\n".join(qasm_lines))
 
