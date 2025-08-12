@@ -185,12 +185,12 @@ class Circuit(BaseCircuit):
 
         # 收尾：把 pos == len(self._qir) 的校准放在最后
         for cal in cals_by_pos.get(len(self._qir), []):
-            print(cal)
+            # print(cal)
             pname = ", ".join(cal.get("parameters", []))
             qasm_lines.append(f"{cal['name']} {pname};")
         
-        print("\n".join(qasm_lines))
-        print(f"before processing : line = {len(qasm_lines)}")
+        # print("\n".join(qasm_lines))
+        # print(f"before processing : line = {len(qasm_lines)}")
 
         return quantum_compiler.process("\n".join(qasm_lines))
 

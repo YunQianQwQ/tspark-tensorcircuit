@@ -70,8 +70,10 @@ def run_circuit(qc):
         enable_qos_gate_decomposition=False,
         enable_qos_qubit_mapping=False,
     )
+    print(qc.to_tqasm())
     n = qc._nqubits
     rf = t.results()
+    print(rf)
     # 截取第一个 '//' 之后
     s = qc.to_tqasm().split('// ')[1]
     s = s.split('\n')[0]
@@ -81,10 +83,10 @@ def run_circuit(qc):
     # 将 ps 改为 每个数在 ps 中有多少个比它小的
     qs = [sum(1 for x in ps if x < p) for p in ps]
     re = {}
-    for a, b in rf:
+    for a, b in rf.items():
         t = ""
         for i in range(n):
-            t += str(qs[i])
+            t += str(a[qs[i]])
         re[t] = b
     return re
 
@@ -167,7 +169,9 @@ edges = [[1, 2], [3, 4], [0, 1], [2, 3], [1, 2], [3, 4]]
 # edges = [[0, 1], [3, 4], [7, 8], [2, 5], [0, 3], [4, 5], [6, 7], [1, 2], [4, 7], [5, 8], [3, 6], [1, 4]]
 
 c = Circuit(n)
-c.cx(0, 1)
+c.x(0)
+c.x(0)
+c.x(1)
 print(run_circuit(c))
 # N = 20
 # test(n, edges, N, 1, 1)
