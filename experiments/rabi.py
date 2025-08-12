@@ -70,11 +70,23 @@ def run_circuit(qc):
         enable_qos_gate_decomposition=False,
         enable_qos_qubit_mapping=False,
     )
+    n = qc._nqubits
     rf = t.results()
     # 截取第一个 '//' 之后
-    s = qc.to_tqasm().split('//')[1]
-    ps = map(int, s.split(' '))
-    return rf
+    s = qc.to_tqasm().split('// ')[1]
+    s = s.split('\n')[0]
+    # print(s.split(' '))
+    ps = list(map(int, s.split(' ')))[:n]
+
+    # 将 ps 改为 每个数在 ps 中有多少个比它小的
+    qs = [sum(1 for x in ps if x < p) for p in ps]
+    re = {}
+    for a, b in rf:
+        t = ""
+        for i in range(n):
+            t += str(qs[i])
+        re[t] = b
+    return re
 
 
 
@@ -145,7 +157,7 @@ def test(n, edge, N, J=-1., h=1.):
 
     # return z_exp_float
 
-n = 13
+n = 2
 edges = [[1, 2], [3, 4], [0, 1], [2, 3], [1, 2], [3, 4]]
 
 # n = 6
@@ -155,11 +167,8 @@ edges = [[1, 2], [3, 4], [0, 1], [2, 3], [1, 2], [3, 4]]
 # edges = [[0, 1], [3, 4], [7, 8], [2, 5], [0, 3], [4, 5], [6, 7], [1, 2], [4, 7], [5, 8], [3, 6], [1, 4]]
 
 c = Circuit(n)
-for i in range(13):
-    c.x(i)
-    c.x(i)
-# c.cx(0, 3)
-run_circuit(c)
+c.cx(0, 1)
+print(run_circuit(c))
 # N = 20
 # test(n, edges, N, 1, 1)
 
