@@ -354,7 +354,8 @@ void process1()
 }
 
 
-static std::string process(const std::string& s) {
+static std::string process(const std::string& s,bool mapping) {
+    if(!mapping)return s;
     rnd=mt19937(0);
 #define clear(a) a=decltype(a)();
     clear(iss);clear(oss);clear(a);clear(en);clear(ep);
@@ -374,5 +375,5 @@ namespace py = pybind11;
 
 PYBIND11_MODULE(quantum_compiler, m) {
     m.doc() = "quantum compiler";
-    m.def("process", &process, py::arg("s"));
+    m.def("process", &process, py::arg("s"), py::arg("mapping")=true);
 }
