@@ -1,6 +1,3 @@
-#include <pybind11/pybind11.h>
-#include <string>
-
 #include<iostream>
 #include<sstream>
 #include<algorithm>
@@ -336,15 +333,15 @@ void process1()
 	oss<<"\n";
 }
 
-namespace py = pybind11;
-
 static std::string process(const std::string& s) {
     iss.str(s);
     process1();
     return oss.str();
 }
 
-PYBIND11_MODULE(mylib, m) {
-    m.doc() = "pybind11 single-file example";
-    m.def("process", &process, py::arg("s"));
+int main()
+{
+	static char s[1<<21];
+	cin.read(s,1<<20);
+	cout<<process(string(s));
 }
