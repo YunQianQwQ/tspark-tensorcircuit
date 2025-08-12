@@ -5,10 +5,12 @@
 #include<queue>
 #include<random>
 #include<string>
+#include<thread>
 #include<vector>
 #define F(i,l,r) for(int i=(l),i##_end=(r);i<i##_end;++i)
 using namespace std;
-constexpr int diameter=4;
+constexpr int diameter=4,n_thread=15;
+int choose_thres;
 mt19937 rnd(0);
 struct physical_gate
 {
@@ -57,6 +59,182 @@ struct gate
 	vector<int> operand;
 };
 int n_gate;
+struct state
+{
+	vector<int> st,po;
+	vector<gate> ga;
+	double loss,est;
+	gate embed(gate u)
+	{
+		for(int &i:u.operand)i=po[i];
+		return u;
+	}
+	void append(const gate &u)
+	{
+		ga.emplace_back(u);
+		if(u.operand.size()==1)loss+=F1[u.operand[0]];
+		else if(u.operand.size()==2)loss+=F2M[pair<int,int>(u.operand[0],u.operand[1])];
+		else throw;
+	}
+	void perform_swap(int u,int v)
+	{
+		if(!~st[u]&&!~st[v]);
+		else if(!~st[u])
+		{
+			append({"CX",{v,u}});
+			append({"CX",{u,v}});
+		}
+		else if(!~st[v])
+		{
+			append({"CX",{u,v}});
+			append({"CX",{v,u}});
+		}
+		else
+		{
+			append({"CX",{u,v}});
+			append({"CX",{v,u}});
+			append({"CX",{u,v}});
+		}
+		swap(st[u],st[v]);
+		if(~st[u])po[st[u]]=u;
+		if(~st[v])po[st[v]]=v;
+	}
+};
+pair<double,state> tans[n_thread];
+struct plan_t
+{
+	vector<gate> a;
+	double calc_dist(int i,const state &st)
+	{
+		if(a[i].operand.size()!=2)return 0;
+		int u=a[i].operand[0],v=a[i].operand[1];
+		u=st.po[u];v=st.po[v];
+		if(!~(u&v))return 0;
+		auto single_source=[&](int s)->vector<double>
+		{
+			vector<double> dis(n_qubit,1e18);
+			if(~s)dis[s]=0;
+			else F(j,0,n_qubit)if(!~st.st[j])dis[j]=0;
+			F(ii,0,diameter)for(const physical_gate &g:F2)
+			{
+				dis[g.u]=min(dis[g.u],dis[g.v]+(3-!~s-!~st.st[g.u])*g.w);
+				dis[g.v]=min(dis[g.v],dis[g.u]+(3-!~s-!~st.st[g.v])*g.w);
+			}
+			return dis;
+		};
+		vector<double> dis_u=single_source(u);
+		vector<double> dis_v=single_source(v);
+		double ans=1e18;
+		for(const physical_gate &g:F2)
+		{
+			ans=min(ans,dis_u[g.u]+dis_v[g.v]);
+			ans=min(ans,dis_u[g.v]+dis_v[g.u]);
+		}
+		return ans;
+	}
+	vector<int> lapa;
+	void perform(vector<state> &vs,int i,state st,int avoid=-1)
+	{
+		if(a[i].operand.size()!=2)throw;
+		int u=a[i].operand[0],v=a[i].operand[1];
+		u=st.po[u];v=st.po[v];
+		if(!~(u|v))throw;
+		auto single_source=[&](int s)->vector<pair<double,int>>
+		{
+			vector<pair<double,int>> dis(n_qubit,{1e18,-1});
+			dis[s]={0,-1};
+			F(ii,0,diameter)for(const physical_gate &g:F2)if(g.u!=avoid&&g.v!=avoid)
+			{
+				dis[g.u]=min(dis[g.u],{dis[g.v].first+(3-!~st.st[g.u])*g.w,g.v});
+				dis[g.v]=min(dis[g.v],{dis[g.u].first+(3-!~st.st[g.v])*g.w,g.u});
+			}
+			return dis;
+		};
+		vector<pair<double,int>> dis_u=single_source(u);
+		vector<pair<double,int>> dis_v=single_source(v);
+		pair<double,pair<int,int>> ans={1e18,{-1,-1}};
+		for(const physical_gate &g:F2)
+		{
+			ans=min(ans,{dis_u[g.u].first+dis_v[g.v].first,{g.u,g.v}});
+			ans=min(ans,{dis_u[g.v].first+dis_v[g.u].first,{g.v,g.u}});
+		}
+		if(!~ans.second.first)return;
+		vector<int> upa,vpa;lapa.clear();
+		for(int z=ans.second.first;z!=u;z=dis_u[z].second)upa.emplace_back(z),lapa.emplace_back(z);
+		upa.emplace_back(u);
+		for(int z=ans.second.second;z!=v;z=dis_v[z].second)vpa.emplace_back(z),lapa.emplace_back(z);
+		vpa.emplace_back(v);
+		for(int j=(int)upa.size()-1;~--j;)st.perform_swap(upa[j],upa[j+1]);
+		for(int j=(int)vpa.size()-1;~--j;)st.perform_swap(vpa[j],vpa[j+1]);
+		st.append(st.embed(a[i]));
+		vs.emplace_back(st);
+	}
+	double estimate(int l,const state &st)
+	{
+		double sum=0,coef=1;
+		F(i,l,n_gate)
+		{
+			if(coef<0.1)break;
+			sum+=calc_dist(i,st)*coef;
+			coef*=a[i].operand.size()>1?0.5:1;
+		}
+		return sum;
+	}
+	vector<state> choose(int l,vector<state> &g)
+	{
+		vector<state> f,h;
+		sort(g.begin(),g.end(),[](const state &u,const state &v){return u.st!=v.st?u.st<v.st:u.loss<v.loss;});
+		F(i,0,(int)g.size())if(!i||g[i].st!=g[i-1].st)h.emplace_back(move(g[i]));
+		g=move(h);
+		for(state &s:g)s.est=estimate(l,s);
+		F(i,0,5)
+		{
+			double coef=0.04+0.24*i;
+			sort(g.begin(),g.end(),[&](const state &u,const state &v){return u.loss+coef*u.est>v.loss+coef*v.est;});
+			int m=(int)g.size();
+			F(j,max(m-choose_thres,0),m)f.emplace_back(move(g[j]));
+			g.resize(max(m-choose_thres,0));
+		}
+		return f;
+	}
+	void add_qubit(vector<state> &f,int l,int u)
+	{
+		vector<state> g;
+		for(const state &s:f)F(i,0,n_qubit)if(!~s.st[i])
+		{
+			state t=s;
+			t.po[u]=i;
+			t.st[i]=u;
+			g.emplace_back(t);
+		}
+		f=choose(l,g);
+	}
+	plan_t(int id,vector<gate> a_):a(a_)
+	{
+		vector<state> f={{vector<int>(n_qubit,-1),vector<int>(n_qubit,-1),{},0,0}};
+		vector<bool> occ(n_qubit);
+		F(i,0,n_gate)
+		{
+			for(int j:a[i].operand)if(!occ[j])add_qubit(f,i,j),occ[j]=true;
+			if(a[i].operand.size()==1)
+			{
+				for(state &s:f)s.append(s.embed(a[i]));
+				continue;
+			}
+			if(a[i].operand.size()!=2)throw;
+			vector<state> g;
+			for(const state &s:f)
+			{
+				perform(g,i,s);
+				vector<int> z=lapa;
+				for(int j:z)perform(g,i,s,j);
+			}
+			f=choose(i+1,g);
+		}
+		for(const state &s:f)tans[id]=min(tans[id],{s.loss,s},[](const pair<double,state> &u,const pair<double,state> &v){return u.first<v.first;});
+	}
+};
+void plan(int id,vector<gate> a){plan_t(id,a);}
 vector<gate> a;
 vector<vector<int>> en,ep;
 istringstream iss;
@@ -120,193 +298,30 @@ vector<int> gen_order()
 	}
 	return order;
 }
-struct state
-{
-	vector<int> st,po;
-	vector<gate> ga;
-	double loss,est;
-	gate embed(gate u)
-	{
-		for(int &i:u.operand)i=po[i];
-		return u;
-	}
-	void append(const gate &u)
-	{
-		ga.emplace_back(u);
-		if(u.operand.size()==1)loss+=F1[u.operand[0]];
-		else if(u.operand.size()==2)loss+=F2M[pair<int,int>(u.operand[0],u.operand[1])];
-		else throw;
-	}
-	void perform_swap(int u,int v)
-	{
-		if(!~st[u]&&!~st[v]);
-		else if(!~st[u])
-		{
-			append({"CX",{v,u}});
-			append({"CX",{u,v}});
-		}
-		else if(!~st[v])
-		{
-			append({"CX",{u,v}});
-			append({"CX",{v,u}});
-		}
-		else
-		{
-			append({"CX",{u,v}});
-			append({"CX",{v,u}});
-			append({"CX",{u,v}});
-		}
-		swap(st[u],st[v]);
-		if(~st[u])po[st[u]]=u;
-		if(~st[v])po[st[v]]=v;
-	}
-};
-double calc_dist(int i,const state &st)
-{
-	if(a[i].operand.size()!=2)return 0;
-	int u=a[i].operand[0],v=a[i].operand[1];
-	u=st.po[u];v=st.po[v];
-	if(!~(u&v))return 0;
-	auto single_source=[&](int s)->vector<double>
-	{
-		vector<double> dis(n_qubit,1e18);
-		if(~s)dis[s]=0;
-		else F(j,0,n_qubit)if(!~st.st[j])dis[j]=0;
-		F(ii,0,diameter)for(const physical_gate &g:F2)
-		{
-			dis[g.u]=min(dis[g.u],dis[g.v]+(3-!~s-!~st.st[g.u])*g.w);
-			dis[g.v]=min(dis[g.v],dis[g.u]+(3-!~s-!~st.st[g.v])*g.w);
-		}
-		return dis;
-	};
-	vector<double> dis_u=single_source(u);
-	vector<double> dis_v=single_source(v);
-	double ans=1e18;
-	for(const physical_gate &g:F2)
-	{
-		ans=min(ans,dis_u[g.u]+dis_v[g.v]);
-		ans=min(ans,dis_u[g.v]+dis_v[g.u]);
-	}
-	return ans;
-}
-vector<int> lapa;
-void perform(vector<state> &vs,int i,state st,int avoid=-1)
-{
-	if(a[i].operand.size()!=2)throw;
-	int u=a[i].operand[0],v=a[i].operand[1];
-	u=st.po[u];v=st.po[v];
-	if(!~(u|v))throw;
-	auto single_source=[&](int s)->vector<pair<double,int>>
-	{
-		vector<pair<double,int>> dis(n_qubit,{1e18,-1});
-		dis[s]={0,-1};
-		F(ii,0,diameter)for(const physical_gate &g:F2)if(g.u!=avoid&&g.v!=avoid)
-		{
-			dis[g.u]=min(dis[g.u],{dis[g.v].first+(3-!~st.st[g.u])*g.w,g.v});
-			dis[g.v]=min(dis[g.v],{dis[g.u].first+(3-!~st.st[g.v])*g.w,g.u});
-		}
-		return dis;
-	};
-	vector<pair<double,int>> dis_u=single_source(u);
-	vector<pair<double,int>> dis_v=single_source(v);
-	pair<double,pair<int,int>> ans={1e18,{-1,-1}};
-	for(const physical_gate &g:F2)
-	{
-		ans=min(ans,{dis_u[g.u].first+dis_v[g.v].first,{g.u,g.v}});
-		ans=min(ans,{dis_u[g.v].first+dis_v[g.u].first,{g.v,g.u}});
-	}
-	if(!~ans.second.first)return;
-	vector<int> upa,vpa;lapa.clear();
-	for(int z=ans.second.first;z!=u;z=dis_u[z].second)upa.emplace_back(z),lapa.emplace_back(z);
-	upa.emplace_back(u);
-	for(int z=ans.second.second;z!=v;z=dis_v[z].second)vpa.emplace_back(z),lapa.emplace_back(z);
-	vpa.emplace_back(v);
-	for(int j=(int)upa.size()-1;~--j;)st.perform_swap(upa[j],upa[j+1]);
-	for(int j=(int)vpa.size()-1;~--j;)st.perform_swap(vpa[j],vpa[j+1]);
-	st.append(st.embed(a[i]));
-	vs.emplace_back(st);
-}
-double estimate(int l,const state &st)
-{
-	double sum=0,coef=1;
-	F(i,l,n_gate)
-	{
-		if(coef<0.1)break;
-		sum+=calc_dist(i,st)*coef;
-		coef*=a[i].operand.size()>1?0.5:1;
-	}
-	return sum;
-}
-vector<state> choose(int l,vector<state> &g)
-{
-	vector<state> f,h;
-	sort(g.begin(),g.end(),[](const state &u,const state &v){return u.st!=v.st?u.st<v.st:u.loss<v.loss;});
-	F(i,0,(int)g.size())if(!i||g[i].st!=g[i-1].st)h.emplace_back(move(g[i]));
-	g=move(h);
-	for(state &s:g)s.est=estimate(l,s);
-	F(i,0,5)
-	{
-		double coef=0.04+0.24*i;
-		sort(g.begin(),g.end(),[&](const state &u,const state &v){return u.loss+coef*u.est>v.loss+coef*v.est;});
-		int m=(int)g.size();
-		F(j,max(m-100,0),m)f.emplace_back(move(g[j]));
-		g.resize(max(m-100,0));
-	}
-	return f;
-}
-vector<state> f;
-void add_qubit(int l,int u)
-{
-	vector<state> g;
-	for(const state &s:f)F(i,0,n_qubit)if(!~s.st[i])
-	{
-		state t=s;
-		t.po[u]=i;
-		t.st[i]=u;
-		g.emplace_back(t);
-	}
-	f=choose(l,g);
-}
 pair<double,state> ans;
-void plan()
-{
-	f={{vector<int>(n_qubit,-1),vector<int>(n_qubit,-1),{},0,0}};
-	vector<bool> occ(n_qubit);
-	F(i,0,n_gate)
-	{
-		for(int j:a[i].operand)if(!occ[j])add_qubit(i,j),occ[j]=true;
-		if(a[i].operand.size()==1)
-		{
-			for(state &s:f)s.append(s.embed(a[i]));
-			continue;
-		}
-		if(a[i].operand.size()!=2)throw;
-		vector<state> g;
-		for(const state &s:f)
-		{
-			perform(g,i,s);
-			vector<int> z=lapa;
-			for(int j:z)perform(g,i,s,j);
-		}
-		f=choose(i+1,g);
-	}
-	for(const state &s:f)ans=min(ans,{s.loss,s},[](const pair<double,state> &u,const pair<double,state> &v){return u.first<v.first;});
-}
 void process1()
 {
 	init();
 	while(read_gate());
 	n_gate=(int)a.size();
 	calc_dependence();
+	vector<vector<int>> orders;
+	int round=40/max(n_gate,20)+2;
+	F(i,0,n_thread*round)orders.emplace_back(gen_order());
 	ans.first=1e18;
-	F(i,0,900/max(n_gate,20)+5)
+	F(i,0,round)
 	{
-		vector<int> order=gen_order();
-		vector<gate> pa;
-		F(j,0,n_gate)pa.emplace_back(a[order[j]]);
-		swap(a,pa);
-		plan();
-		swap(a,pa);
+		choose_thres=i?100:max(20000/max(n_gate,20),100);
+		vector<thread> th;
+		F(j,0,n_thread)
+		{
+			vector<gate> pa;
+			tans[j].first=1e18;
+			F(k,0,n_gate)pa.emplace_back(a[orders[i*n_thread+j][k]]);
+			th.emplace_back(plan,j,pa);
+		}
+		for(thread &t:th)t.join();
+		F(j,0,n_thread)ans=min(ans,tans[j],[](const pair<double,state> &u,const pair<double,state> &v){return u.first<v.first;});
 	}
 //	cerr<<ans.first<<endl;
 	oss<<"QREG q["<<n_qubit<<"];\n";
@@ -336,7 +351,8 @@ void process1()
 }
 
 
-static std::string process(const std::string& s) {
+static std::string process(const std::string& s,bool mapping) {
+    if(!mapping)return s;
     rnd=mt19937(0);
 #define clear(a) a=decltype(a)();
     clear(iss);clear(oss);clear(a);clear(en);clear(ep);
