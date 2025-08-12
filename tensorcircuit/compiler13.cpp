@@ -355,7 +355,12 @@ void process1()
 
 
 static std::string process(const std::string& s,bool mapping) {
-    if(!mapping)return s;
+    if(!mapping) {
+        string t=s+"\n//";
+        F(i,0,13)t+=" "+to_string(i);
+        t+="\n";
+        return t;
+    }
     rnd=mt19937(0);
 #define clear(a) a=decltype(a)();
     clear(iss);clear(oss);clear(a);clear(en);clear(ep);
