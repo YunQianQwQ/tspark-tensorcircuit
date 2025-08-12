@@ -12,7 +12,7 @@
 #include<vector>
 #define F(i,l,r) for(int i=(l),i##_end=(r);i<i##_end;++i)
 using namespace std;
-constexpr int diameter=4,n_thread=15;
+constexpr int diameter=11,n_thread=15;
 int choose_thres;
 mt19937 rnd(0);
 struct physical_gate
