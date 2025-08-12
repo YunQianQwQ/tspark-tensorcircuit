@@ -2,7 +2,7 @@ import numpy as np
 import tensorcircuit as tc
 from tensorcircuit.cloud import apis
 
-TOKEN = 'W6QyiJRRS.DFibko9DVIuZwdqoTa5mGtl8HxoIYy4pfCPMTwhBztGrnXovVzUT0L6c-7nilqVxg1lcWd7Fj0pmLHvmb9RmA8TD8fSndBorSlfdVxPcJRQuKs.R5M9Ecu6G5DyJaAPwULZPs5r6H23G8='
+TOKEN = os.getenv("TOKEN")
 apis.set_token(TOKEN)
 
 def create_circuit_with_prep_state(n: int, target_state) -> tc.Circuit:

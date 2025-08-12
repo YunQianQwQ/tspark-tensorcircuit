@@ -8,7 +8,7 @@ add_measure_commands([2, 1])  # 添加测量命令到量子比特0和1
 import tensorcircuit as tc
 from tensorcircuit.cloud import apis
 
-token = 'W6QyiJRRS.DFibko9DVIuZwdqoTa5mGtl8HxoIYy4pfCPMTwhBztGrnXovVzUT0L6c-7nilqVxg1lcWd7Fj0pmLHvmb9RmA8TD8fSndBorSlfdVxPcJRQuKs.R5M9Ecu6G5DyJaAPwULZPs5r6H23G8='
+token = ''
 apis.set_token(token)
 print(apis.list_devices(provider="tencent"))
 

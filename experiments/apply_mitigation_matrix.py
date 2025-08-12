@@ -5,7 +5,7 @@ from edit_module import add_measure_commands, remove_measure_commands
 from get_readout_pseudoinverse import get_mitigation_matrix
 from mitigation import apply_mitigation, apply_mitigation_locality
 
-TOKEN = 'W6QyiJRRS.DFibko9DVIuZwdqoTa5mGtl8HxoIYy4pfCPMTwhBztGrnXovVzUT0L6c-7nilqVxg1lcWd7Fj0pmLHvmb9RmA8TD8fSndBorSlfdVxPcJRQuKs.R5M9Ecu6G5DyJaAPwULZPs5r6H23G8='
+TOKEN = os.getenv("TOKEN")
 
 def apply_mitigation_matrix(qubits: list[int], measure_results: dict, shots: int) -> np.ndarray:
     '''
