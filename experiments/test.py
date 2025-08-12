@@ -18,7 +18,7 @@ load_dotenv()
 set_token(os.getenv("TOKEN"))
 set_provider("tencent")
 
-T = 5
+T = 19
 
 def rzz (c, i, j, theta):
 	c.cnot(j, i)
@@ -52,9 +52,12 @@ edges = [[1, 2], [3, 4], [0, 1], [2, 3], [1, 2], [3, 4]]
 # n = 9
 # edges = [[0, 1], [3, 4], [7, 8], [2, 5], [0, 3], [4, 5], [6, 7], [1, 2], [4, 7], [5, 8], [3, 6], [1, 4]]
 
-N = 4
+N = 2
 c = test(n, edges, N, 1, 1)
 
 # print(c.state())
+st = c.state()
+print(np.abs(st) ** 2)
 res = run_circuit(c)
 res = apply_mitigation_matrix(res[1], res[0], 1000)
+

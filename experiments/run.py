@@ -6,7 +6,7 @@ import sys
 module_path = ".."
 sys.path.insert(0, module_path)
 
-shots_const = 1000
+shots_const = 8000
 
 def run_circuit(qc):
     # print("asddslkajfjsakf")
@@ -24,12 +24,13 @@ def run_circuit(qc):
         enable_qos_gate_decomposition=False,
         enable_qos_qubit_mapping=False,
     )
-    # print(qc.to_tqasm())
+    print("number of CX =", qc.to_tqasm().count("CX"))
     n = qc._nqubits
     rf = t.results()
     # 截取第一个 '//' 之后
     s = qc.to_tqasm().split('// ')[1]
     s = s.split('\n')[0]
+    print("s =", s)
     # print(s.split(' '))
     ps = list(map(int, s.split(' ')))[:n]
 
