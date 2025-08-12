@@ -215,6 +215,7 @@ def submit_task(
                 else:
                     s = c.to_tqasm()
                     print(s)
+                    print(f"after processing : line = {s.count('\n')}")
                     #s = c.to_openqasm()
                     # nq = c._nqubits
             # s = _free_pi(s) # tQuk translation now supports this
