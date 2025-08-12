@@ -61,17 +61,19 @@ def gen_parametric_waveform_circuit(t):
 
 
 def run_circuit(qc):
-    device_name = "tianji_m2"
+    device_name = "tianji_s2"
     d = get_device(device_name)
     t = submit_task(
-    circuit=qc,
-    shots=shots_const,
-    device=d,
-    enable_qos_gate_decomposition=False,
-    enable_qos_qubit_mapping=False,
+        circuit=qc,
+        shots=shots_const,
+        device=d,
+        enable_qos_gate_decomposition=False,
+        enable_qos_qubit_mapping=False,
     )
     rf = t.results()
-    print(rf)
+    # 截取第一个 '//' 之后
+    s = qc.to_tqasm().split('//')[1]
+    ps = map(int, s.split(' '))
     return rf
 
 
@@ -143,7 +145,7 @@ def test(n, edge, N, J=-1., h=1.):
 
     # return z_exp_float
 
-n = 5
+n = 13
 edges = [[1, 2], [3, 4], [0, 1], [2, 3], [1, 2], [3, 4]]
 
 # n = 6
@@ -153,8 +155,13 @@ edges = [[1, 2], [3, 4], [0, 1], [2, 3], [1, 2], [3, 4]]
 # edges = [[0, 1], [3, 4], [7, 8], [2, 5], [0, 3], [4, 5], [6, 7], [1, 2], [4, 7], [5, 8], [3, 6], [1, 4]]
 
 c = Circuit(n)
-N = 20
-test(n, edges, N, 1, 1)
+for i in range(13):
+    c.x(i)
+    c.x(i)
+# c.cx(0, 3)
+run_circuit(c)
+# N = 20
+# test(n, edges, N, 1, 1)
 
 
 
