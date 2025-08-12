@@ -8,6 +8,7 @@ import tensorcircuit as tc
 import tensorflow as tf
 import matplotlib.pyplot as plt
 from run import run_circuit
+from apply_mitigation_matrix import apply_mitigation_matrix
 
 from tensorcircuit.cloud.apis import submit_task, get_device, set_provider, set_token, list_devices, list_properties
 from dotenv import load_dotenv
@@ -53,5 +54,7 @@ edges = [[1, 2], [3, 4], [0, 1], [2, 3], [1, 2], [3, 4]]
 
 N = 4
 c = test(n, edges, N, 1, 1)
+
 # print(c.state())
-print(run_circuit(c))
+res = run_circuit(c)
+res = apply_mitigation_matrix(res[1], res[0], 1000)
