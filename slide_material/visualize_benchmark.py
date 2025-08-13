@@ -8,7 +8,7 @@ y3=[1.000000,1.666667,1.644333,1.785200,1.831067,1.969190,2.169000,2.396833,2.67
 plt.plot(x,y1,'s:',label='default',color='#777')
 plt.plot(x,y2,'o-',label='greedy')
 plt.plot(x,y21,'o-',label='swap0')
-plt.plot(x,y22,'o-',label='reorder')
+plt.plot(x,y22,'o-',label='rearrange')
 plt.plot(x,y3,'o-',label='beam search')
 plt.legend()
 plt.grid(alpha=0.3)
